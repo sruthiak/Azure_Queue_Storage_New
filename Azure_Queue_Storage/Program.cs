@@ -8,17 +8,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// add Background service to our api
-builder.Services.AddHostedService<WeatherDataServiceBackgroundJob>();
+// add Background service to our api. Commenting because of using Azure Function
+//builder.Services.AddHostedService<WeatherDataServiceBackgroundJob>();
 
 // add queue client
 builder.Services.AddAzureClients(builder =>
 {
-    builder.AddClient<QueueClient, QueueClientOptions>(_ =>
+    builder.AddClient<QueueClient, QueueClientOptions>((options,_,_) =>
     {
+        //queue trigger of Azure Functions requires the message to be base64 encoded
+        options.MessageEncoding = QueueMessageEncoding.Base64;
         var connectionString = "DefaultEndpointsProtocol=https;AccountName=stgaccountsruthi;AccountKey=lPIByl/+F2TO833HzwMytTkmv3SF25QjK3D62JblrqSUj2D840EM/51A8aeO+umnhFKWAk7A0quG+AStW3Iwlw==;EndpointSuffix=core.windows.net";
         var queueName = "weatherdata";
-        return new QueueClient(connectionString, queueName);
+        return new QueueClient(connectionString, queueName,options);
     });
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
